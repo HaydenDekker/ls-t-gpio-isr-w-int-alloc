@@ -43,14 +43,6 @@ xt_highint5:
     s32i	a15, a14, 0
     memw
 
-	movi	a15, GPIO_STATUS_REG
-    l32i	a13, a15, 0
-    memw
-
-    movi    a14, gpio_status
-    s32i	a13, a14, 0
-    memw
-
     movi	a15, DPORT_APP_GPIO_INTERRUPT_MAP_REG
     l32i	a13, a15, 0
     memw
@@ -59,10 +51,18 @@ xt_highint5:
     s32i	a13, a14, 0
     memw
 
+    movi	a15, GPIO_STATUS_REG
+    l32i	a13, a15, 0 // will hold PIN 18 or 19, which should clear the ISR.
+    memw
+
+    movi    a14, gpio_status
+    s32i	a13, a14, 0
+    memw
+
     /* Clear interupt on GPIO18 and GPIO19 */
     movi    a14, GPIO_STATUS_W1TC_REG
-    movi    a15, (1 << 18) | (1 << 19)
-    s32i    a15, a14, 0
+    // movi    a15, (1 << 18) | (1 << 19)
+    s32i    a13, a14, 0
     memw
 
     //movi    a14, isr_runs_total
