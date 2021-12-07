@@ -9,7 +9,12 @@
 #include "soc/dport_reg.h"
 #include "soc/timer_group_reg.h"
 
+
+// 12 bytes 4 bytes per reg, 3 regs saveable
 #define L5_INTR_STACK_SIZE  12
+#define LX_INTR_A15_OFFSET 0
+#define LX_INTR_A14_OFFSET 4
+#define LX_INTR_A13_OFFSET 8
 #define UART0_DATA_REG                      (0x3FF40078)
 
     .data
@@ -22,6 +27,12 @@ _l5_intr_stack:
     .align      4
 xt_highint5:
 
+	/* store reg values */
+	movi    a0, _l5_intr_stack // assuming a0 saved restored by EXCSAVE_5 at the end of this
+    s32i    a15, a0, LX_INTR_A15_OFFSET
+    s32i    a14, a0, LX_INTR_A14_OFFSET
+    s32i    a13, a0, LX_INTR_A13_OFFSET
+
  	rsr		a15, INTERRUPT
     movi    a14, gpio_vector_interrupt
     s32i	a15, a14, 0
@@ -33,17 +44,19 @@ xt_highint5:
     memw
 
 	movi	a15, GPIO_STATUS_REG
-    l32i	a7, a15, 0
+    l32i	a13, a15, 0
+    memw
 
     movi    a14, gpio_status
-    s32i	a7, a14, 0
+    s32i	a13, a14, 0
     memw
 
     movi	a15, DPORT_APP_GPIO_INTERRUPT_MAP_REG
-    l32i	a7, a15, 0
+    l32i	a13, a15, 0
+    memw
 
     movi    a14, app_gpio_int_map
-    s32i	a7, a14, 0
+    s32i	a13, a14, 0
     memw
 
     /* Clear interupt on GPIO18 and GPIO19 */
@@ -52,11 +65,16 @@ xt_highint5:
     s32i    a15, a14, 0
     memw
 
-    movi    a14, isr_runs_total
-    l32i    a15, a14, 0
-    addi    a15, a15, 1
-    s32i    a15, a14, 0
-   	memw
+    //movi    a14, isr_runs_total
+    //l32i    a15, a14, 0
+    //addi    a15, a15, 1
+    //s32i    a15, a14, 0
+   	//memw
+
+   	// restore regs
+   	l32i    a15, a0, LX_INTR_A15_OFFSET
+    l32i    a14, a0, LX_INTR_A14_OFFSET
+    l32i    a13, a0, LX_INTR_A13_OFFSET
 
     rsr     a0, EXCSAVE_5 // restore a0
     rfi     5
